@@ -1,7 +1,10 @@
-import sys
 import os
-import numpy as np
 import random as rand
+import sys
+
+import numpy as np
+
+from render import draw_table
 
 
 # Print help for command line usage
@@ -71,12 +74,17 @@ def print_cards(outdir: str, cards: list[list[int]], cells: list[str]):
     cells_nb = len(cells)
     N = int(np.sqrt(cells_nb))
     # function to get the actual cells
-    into_cell = lambda indices: map(lambda index: cells[index], indices)
+    into_cell = lambda indices: list(map(lambda index: cells[index], indices))
     # create `.csv` file for each card
     for n, card in enumerate(cards):
-        with open(outdir + "/card_" + str(n) + ".csv", "w") as file:
-            for i in range(0, cells_nb, N):
-                file.write(",".join(into_cell(card[i : i + N])) + "\n")
+        print(card)
+        card_values = into_cell(card)
+        rows: list[list[str]] = []
+        i = 0
+        for i in range(N):
+            rows.append(card_values[i*N:(i+1)*N])
+        image = draw_table(rows)
+        image.save(outdir + "/card_" + str(n) + ".png", "PNG")
 
 
 def main():
