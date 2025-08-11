@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install ruff and reviewdog
         run: |
@@ -27,6 +27,6 @@ jobs:
       - name: Run ruff via reviewdog
         run: |
           ruff check . --output-format=github \
-            | reviewdog -f=github -reporter=github-pr-review -level=warning
+            | reviewdog -efm=github -reporter=github-pr-review -level=warning
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
