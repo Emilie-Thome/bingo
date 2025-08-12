@@ -23,6 +23,19 @@ def get_text_size(text: str, font: ImageFont.FreeTypeFont | ImageFont.ImageFont)
     return text_width, text_height
 
 
+def default_colors() -> dict[str, str | None]:
+    return {
+        "bg": None,
+        "cell_bg": "white",
+        "header_bg": "gray",
+        "font": "black",
+        "rowline": "black",
+        "colline": "black",
+        "red": "red",
+        "green": "green",
+    }
+
+
 def draw_table(
     table: list[list[str]],
     header=[],
@@ -30,7 +43,7 @@ def draw_table(
     cell_pad=(20, 10),
     margin=(10, 10),
     align=None,
-    colors={},
+    colors=default_colors(),
     stock=False,
 ):
     """
@@ -45,17 +58,6 @@ def draw_table(
     :param colors:   Dict, as follows.
     :param stock:    Bool, set red/green font color for cells start with +/-.
     """
-    _color = {
-        "bg": "white",
-        "cell_bg": "white",
-        "header_bg": "gray",
-        "font": "black",
-        "rowline": "black",
-        "colline": "black",
-        "red": "red",
-        "green": "green",
-    }
-    _color.update(colors)
     _margin = position_tuple(*margin)
 
     table = table.copy()
@@ -76,7 +78,7 @@ def draw_table(
             tab_width + _margin.left + _margin.right,
             tab_heigh + _margin.top + _margin.bottom,
         ),
-        _color["bg"],
+        colors["bg"],
     )
     draw = ImageDraw.Draw(tab)
 
@@ -85,7 +87,7 @@ def draw_table(
             (_margin.left, _margin.top),
             (_margin.left + tab_width, _margin.top + tab_heigh),
         ],
-        fill=_color["cell_bg"],
+        fill=colors["cell_bg"],
         width=0,
     )
     if header:
@@ -97,7 +99,7 @@ def draw_table(
                     _margin.top + row_max_hei[0] + cell_pad[1] * 2,
                 ),
             ],
-            fill=_color["header_bg"],
+            fill=colors["header_bg"],
             width=0,
         )
 
@@ -105,34 +107,34 @@ def draw_table(
     for row_h in row_max_hei:
         draw.line(
             [(_margin.left, top), (tab_width + _margin.left, top)],
-            fill=_color["rowline"],
+            fill=colors["rowline"],
         )
         top += row_h + cell_pad[1] * 2
     draw.line(
-        [(_margin.left, top), (tab_width + _margin.left, top)], fill=_color["rowline"]
+        [(_margin.left, top), (tab_width + _margin.left, top)], fill=colors["rowline"]
     )
 
     left = _margin.left
     for col_w in col_max_wid:
         draw.line(
             [(left, _margin.top), (left, tab_heigh + _margin.top)],
-            fill=_color["colline"],
+            fill=colors["colline"],
         )
         left += col_w + cell_pad[0] * 2
     draw.line(
-        [(left, _margin.top), (left, tab_heigh + _margin.top)], fill=_color["colline"]
+        [(left, _margin.top), (left, tab_heigh + _margin.top)], fill=colors["colline"]
     )
 
     top, left = _margin.top + cell_pad[1], 0
     for i in range(len(table)):
         left = _margin.left + cell_pad[0]
         for j in range(len(table[i])):
-            color = _color["font"]
+            color = colors["font"]
             if stock:
                 if table[i][j].startswith("+"):
-                    color = _color["red"]
+                    color = colors["red"]
                 elif table[i][j].startswith("-"):
-                    color = _color["green"]
+                    color = colors["green"]
             _left = left
             if (align and align[j] == "c") or (header and i == 0):
                 _left += (col_max_wid[j] - get_text_size(table[i][j], font)[0]) // 2
