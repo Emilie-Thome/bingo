@@ -19,7 +19,7 @@ def print_help():
 
 
 # Function to handle command line arguments.
-def handle_args(args: list[str]) -> tuple[str, int, str]:
+def handle_args(args: list[str]) -> tuple[str, str, str]:
     # first time using this program?
     if len(args) == 0:
         sys.exit("arguments must be provided, use '-h' for help")
@@ -42,53 +42,42 @@ def handle_args(args: list[str]) -> tuple[str, int, str]:
     return (args[0], args[1], args[2])
 
 
+# Read players' names from namepath.
+def read_names(namepath: str) -> list[str]:
+    with open(namepath, "r") as file:
+        return [name.rstrip().replace(" ", "_") for name in file]
+
+
 # Get bingo cells content from filepath.
 def get_cells(filepath: str) -> list[str]:
-    cells = []
     with open(filepath) as file:
-        for cell in file:
-            cells.append(cell.rstrip())
-    return cells
+        return [cell.rstrip() for cell in file]
 
 
-# Generate random bingo cards.
-def generate_cards(cells_nb: int, cards_nb: int) -> list[list[int]]:
-    # check that the number of cells makes a square card
-    if int(np.sqrt(cells_nb)) ** 2 != cells_nb:
-        sys.exit("invalid number of bingo cells, it should be a square number")
-    # generate random index sequences
-    cards = []
-    for _ in range(0, cards_nb):
-        card = list(range(0, cells_nb))
-        rand.shuffle(card)
-        cards.append(card)
-    return cards
-
-
-# Generate images with bingo cards.
-def generate_images(outdir: str, cards: list[list[int]], cells: list[str], names: list[str]):
-    # create folder if not exist
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+# Generate random bingo cards for each player.
+def generate_cards(cells: list[str], names: list[str], outdir: str):
     # cards size = N*N
     cells_nb = len(cells)
     N = int(np.sqrt(cells_nb))
-    # function to get the actual cells
-    into_cell = lambda indices: list(map(lambda index: cells[index], indices))
+
+    # check that the number of cells makes a square card
+    if N**2 != cells_nb:
+        sys.exit("invalid number of bingo cells, it should be a square number")
+
+    # one random bingo card.
+    def random_card() -> list[list[str]]:
+        card = cells.copy()
+        rand.shuffle(card)
+        return [card[i * N : (i + 1) * N] for i in range(0, N)]
+
+    # create folder if not exist
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
     # create `.png` file for each card
-    for n, card in enumerate(cards):
-        card_values = into_cell(card)
-        rows: list[list[str]] = []
-        i = 0
-        for i in range(N):
-            rows.append(card_values[i*N:(i+1)*N])
-        image = draw_table(rows)
-        image.save(os.path.join(outdir, f"{names[n]}.png"), "PNG")
-
-
-def read_names(namepath: str) -> list[str]:
-    with open(namepath, "r") as f:
-        return [n.rstrip().replace(' ', '_') for n in f]
+    for name in names:
+        image = draw_table(random_card())
+        image.save(os.path.join(outdir, f"{name}.png"), "PNG")
 
 
 def main():
@@ -96,10 +85,9 @@ def main():
     (filepath, namepath, outdir) = handle_args(args)
     names = read_names(namepath)
     cells = get_cells(filepath)
-    print("generate images...")
-    cards = generate_cards(len(cells), len(names))
-    generate_images(outdir, cards, cells, names)
-    print("done")
+    print("generate cards...")
+    generate_cards(cells, names, outdir)
+    print("bingo!")
 
 
 if __name__ == "__main__":
