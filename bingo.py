@@ -7,8 +7,10 @@ import numpy as np
 from render import draw_table
 
 
-# Print help for command line usage
 def print_help():
+    """
+    Prints help for command line usage.
+    """
     print(
         "usage: \n\
   >> python3 bingo.py INPUT_PATH NAMES_PATH OUTPUT_DIR\n\
@@ -18,8 +20,14 @@ def print_help():
     )
 
 
-# Function to handle command line arguments.
 def handle_args(args: list[str]) -> tuple[str, str, str]:
+    """
+    Function to handle command line arguments.
+
+    :returns: Tuple corresponding to cells path, names path, and output directory.
+
+    :param args: The command line arguments.
+    """
     # first time using this program?
     if len(args) == 0:
         sys.exit("arguments must be provided, use '-h' for help")
@@ -42,20 +50,38 @@ def handle_args(args: list[str]) -> tuple[str, str, str]:
     return (args[0], args[1], args[2])
 
 
-# Read players' names from namepath.
 def read_names(namepath: str) -> list[str]:
+    """
+    Reads players' names from names path.
+
+    :returns: List of names, adapted to file-naming.
+
+    :param namepath: Path to names.
+    """
     with open(namepath, "r") as file:
         return [name.rstrip().replace(" ", "_") for name in file]
 
 
-# Get bingo cells content from filepath.
 def get_cells(filepath: str) -> list[str]:
+    """
+    Gets bingo cells content from filepath.
+
+    :returns: List of bingo cells content.
+
+    :param filepath: Path to bingo cells.
+    """
     with open(filepath) as file:
         return [cell.rstrip() for cell in file]
 
 
-# Generate random bingo cards for each player.
 def generate_cards(cells: list[str], names: list[str], outdir: str):
+    """
+    Generates random bingo cards for each player.
+
+    :param cells:  Path to bingo cells.
+    :param names:  Players' names.
+    :param outdir: Output directory.
+    """
     # cards size = N*N
     cells_nb = len(cells)
     N = int(np.sqrt(cells_nb))
@@ -64,8 +90,10 @@ def generate_cards(cells: list[str], names: list[str], outdir: str):
     if N**2 != cells_nb:
         sys.exit("invalid number of bingo cells, it should be a square number")
 
-    # one random bingo card.
     def random_card() -> list[list[str]]:
+        """
+        :returns: One random bingo card.
+        """
         card = cells.copy()
         rand.shuffle(card)
         return [card[i * N : (i + 1) * N] for i in range(0, N)]

@@ -16,7 +16,7 @@ def position_tuple(*args):
         return Position(args[0], args[1], args[2], args[3])
 
 
-def get_text_size(text: str, font: ImageFont.FreeTypeFont):
+def get_text_size(text: str, font: ImageFont.FreeTypeFont | ImageFont.ImageFont):
     text_bbox = font.getbbox(text)
     text_width = text_bbox[2] - text_bbox[0]
     text_height = text_bbox[3] - text_bbox[1]
@@ -34,15 +34,16 @@ def draw_table(
     stock=False,
 ):
     """
-    Draw a table using only Pillow
-    table:    an 2d list, must be str
-    header:   turple or list, must be str
-    font:     an ImageFont object
-    cell_pad: padding for cell, (top_bottom, left_right)
-    margin:   margin for table, css-like shorthand
-    align:    None or list, 'l'/'c'/'r' for left/center/right, length must be the max count of columns
-    colors:   dict, as follows
-    stock:    bool, set red/green font color for cells start with +/-
+    Draw a table using Pillow.
+
+    :param table:    A 2D list of strings.
+    :param header:   A list of strings.
+    :param font:     An ImageFont object.
+    :param cell_pad: Padding for cell, (top_bottom, left_right).
+    :param margin:   Margin for table, css-like shorthand.
+    :param align:    None or list of char, 'l'/'c'/'r' for left/center/right, length must be the max count of columns.
+    :param colors:   Dict, as follows.
+    :param stock:    Bool, set red/green font color for cells start with +/-.
     """
     _color = {
         "bg": "white",
