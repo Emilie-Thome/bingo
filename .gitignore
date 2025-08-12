@@ -1,2 +1,6 @@
-*.txt
+input
 *.csv
+*.png
+
+env_*
+__pycache__
