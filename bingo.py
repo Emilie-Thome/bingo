@@ -14,7 +14,7 @@ def print_help():
   >> python3 bingo.py INPUT_PATH NAMES_PATH OUTPUT_DIR\n\
   with - INPUT_PATH: path to the input file containing the text of bingo cells, ONE BY LINE\n\
        - NAMES_PATH: file with the names of the people participating in the bingo\n\
-       - OUTPUT_DIR: path to the output directory where cards will be generated as csv files\n"
+       - OUTPUT_DIR: path to the output directory where cards will be generated as PNG images\n"
     )
 
 
@@ -65,8 +65,8 @@ def generate_cards(cells_nb: int, cards_nb: int) -> list[list[int]]:
     return cards
 
 
-# Generate files with bingo cards.
-def print_cards(outdir: str, cards: list[list[int]], cells: list[str], names: list[str]):
+# Generate images with bingo cards.
+def generate_images(outdir: str, cards: list[list[int]], cells: list[str], names: list[str]):
     # create folder if not exist
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -75,7 +75,7 @@ def print_cards(outdir: str, cards: list[list[int]], cells: list[str], names: li
     N = int(np.sqrt(cells_nb))
     # function to get the actual cells
     into_cell = lambda indices: list(map(lambda index: cells[index], indices))
-    # create `.csv` file for each card
+    # create `.png` file for each card
     for n, card in enumerate(cards):
         print(card)
         card_values = into_cell(card)
@@ -99,7 +99,7 @@ def main():
     print(names)
     cells = get_cells(filepath)
     cards = generate_cards(len(cells), len(names))
-    print_cards(outdir, cards, cells, names)
+    generate_images(outdir, cards, cells, names)
 
 
 if __name__ == "__main__":
