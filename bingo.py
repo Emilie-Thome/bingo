@@ -77,7 +77,6 @@ def generate_images(outdir: str, cards: list[list[int]], cells: list[str], names
     into_cell = lambda indices: list(map(lambda index: cells[index], indices))
     # create `.png` file for each card
     for n, card in enumerate(cards):
-        print(card)
         card_values = into_cell(card)
         rows: list[list[str]] = []
         i = 0
@@ -96,10 +95,11 @@ def main():
     args = sys.argv[1:]
     (filepath, namepath, outdir) = handle_args(args)
     names = read_names(namepath)
-    print(names)
     cells = get_cells(filepath)
+    print("generate images...")
     cards = generate_cards(len(cells), len(names))
     generate_images(outdir, cards, cells, names)
+    print("done")
 
 
 if __name__ == "__main__":
