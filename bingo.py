@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 
-from render import draw_table
+from render import TableImage
 
 
 def print_help():
@@ -104,7 +104,7 @@ def generate_cards(cells: list[str], names: list[str], outdir: str):
 
     # create `.png` file for each card
     for name in names:
-        image = draw_table(random_card())
+        image = TableImage(random_card()).draw()
         image.save(os.path.join(outdir, f"{name}.png"), "PNG")
 
 

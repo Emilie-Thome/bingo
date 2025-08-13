@@ -1,147 +1,194 @@
 from PIL import Image, ImageFont, ImageDraw
-from collections import namedtuple
 
 
-def position_tuple(*args):
-    Position = namedtuple("Position", ["top", "right", "bottom", "left"])
-    if len(args) == 0:
-        return Position(0, 0, 0, 0)
-    elif len(args) == 1:
-        return Position(args[0], args[0], args[0], args[0])
-    elif len(args) == 2:
-        return Position(args[0], args[1], args[0], args[1])
-    elif len(args) == 3:
-        return Position(args[0], args[1], args[2], args[1])
-    else:
-        return Position(args[0], args[1], args[2], args[3])
-
-
-def get_text_size(text: str, font: ImageFont.FreeTypeFont | ImageFont.ImageFont):
-    text_bbox = font.getbbox(text)
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = text_bbox[3] - text_bbox[1]
-    return text_width, text_height
-
-
-def default_colors() -> dict[str, str | None]:
-    return {
-        "bg": None,
-        "cell_bg": "white",
-        "header_bg": "gray",
-        "font": "black",
-        "rowline": "black",
-        "colline": "black",
-        "red": "red",
-        "green": "green",
-    }
-
-
-def draw_table(
-    table: list[list[str]],
-    header=[],
-    font=ImageFont.load_default(),
-    cell_pad=(20, 10),
-    margin=(10, 10),
-    align=None,
-    colors=default_colors(),
-    stock=False,
-):
+class Margin:
     """
-    Draw a table using Pillow.
-
-    :param table:    A 2D list of strings.
-    :param header:   A list of strings.
-    :param font:     An ImageFont object.
-    :param cell_pad: Padding for cell, (top_bottom, left_right).
-    :param margin:   Margin for table, css-like shorthand.
-    :param align:    None or list of char, 'l'/'c'/'r' for left/center/right, length must be the max count of columns.
-    :param colors:   Dict, as follows.
-    :param stock:    Bool, set red/green font color for cells start with +/-.
+    Margin settings class.
     """
-    _margin = position_tuple(*margin)
 
-    table = table.copy()
-    if header:
-        table.insert(0, header)
-    row_max_hei = [0] * len(table)
-    col_max_wid = [0] * len(max(table, key=len))
-    for i in range(len(table)):
-        for j in range(len(table[i])):
-            col_max_wid[j] = max(get_text_size(table[i][j], font)[0], col_max_wid[j])
-            row_max_hei[i] = max(get_text_size(table[i][j], font)[1], row_max_hei[i])
-    tab_width = sum(col_max_wid) + len(col_max_wid) * 2 * cell_pad[0]
-    tab_heigh = sum(row_max_hei) + len(row_max_hei) * 2 * cell_pad[1]
+    def __init__(self, top=0, bottom=0, right=0, left=0):
+        self.top = top
+        self.bottom = bottom
+        self.right = right
+        self.left = left
 
-    tab = Image.new(
-        "RGBA",
-        (
-            tab_width + _margin.left + _margin.right,
-            tab_heigh + _margin.top + _margin.bottom,
-        ),
-        colors["bg"],
-    )
-    draw = ImageDraw.Draw(tab)
 
-    draw.rectangle(
-        [
-            (_margin.left, _margin.top),
-            (_margin.left + tab_width, _margin.top + tab_heigh),
-        ],
-        fill=colors["cell_bg"],
-        width=0,
-    )
-    if header:
+class Padding:
+    """
+    Cell padding settings class.
+    """
+
+    def __init__(self, width=20, height=10):
+        self.width = width
+        self.height = height
+
+
+class Colors:
+    """
+    Color settings class.
+    """
+
+    def __init__(
+        self,
+        bg=0,
+        cell_bg="white",
+        header_bg="gray",
+        font="black",
+        row_line="black",
+        col_line="black",
+        red="red",
+        green="green",
+    ):
+        self.bg = bg
+        self.cell_bg = cell_bg
+        self.header_bg = header_bg
+        self.font = font
+        self.row_line = row_line
+        self.col_line = col_line
+        self.red = red
+        self.green = green
+
+
+class TableImage:
+    """
+    Image of table.
+    """
+
+    def __init__(
+        self,
+        table: list[list[str]],
+        font=ImageFont.load_default(),
+        cell_pad=Padding(),
+        margin=Margin(),
+        colors=Colors(),
+        stock=False,
+    ):
+        """
+        Create a table image.
+
+        :param table:    A 2D list of strings.
+        :param font:     An ImageFont object.
+        :param cell_pad: Padding for cell, (top_bottom, left_right).
+        :param margin:   Margin for table, (top, bottom, left, right).
+        :param colors:   Color settings.
+        :param stock:    Boolean, set red/green font color for cells start with +/-.
+        """
+        self.table = table.copy()
+        self.font = font
+        self.cell_pad = cell_pad
+        self.margin = margin
+        self.colors = colors
+        self.stock = stock
+
+        # compute dimensions
+        self.row_height = [0] * len(self.table)
+        self.col_width = [0] * len(max(self.table, key=len))
+        for i, row in enumerate(self.table):
+            for j, cell in enumerate(row):
+                (width, height) = self.text_size(cell)
+                self.col_width[j] = max(width, self.col_width[j])
+                self.row_height[i] = max(height, self.row_height[i])
+        self.tab_width = (
+            sum(self.col_width) + len(self.col_width) * 2 * self.cell_pad.width
+        )
+        self.tab_height = (
+            sum(self.row_height) + len(self.row_height) * 2 * self.cell_pad.height
+        )
+
+    def text_size(
+        self,
+        text: str,
+    ) -> tuple[int, int]:
+        text_bbox = self.font.getbbox(text)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        return (text_width, text_height)
+
+    def table_dimensions(self):
+        """
+        Returns the dimensions of the table.
+        This includes the dimensions of all cells.
+        """
+        return (self.tab_width, self.tab_height)
+
+    def table_position(self):
+        start_xy = (self.margin.left, self.margin.top)
+        end_xy = (self.tab_width + self.margin.left, self.tab_height + self.margin.top)
+        return (start_xy, end_xy)
+
+    def image_dimensions(self):
+        """
+        Returns the dimensions of the image.
+        """
+        return (
+            self.tab_width + self.margin.left + self.margin.right,
+            self.tab_height + self.margin.top + self.margin.bottom,
+        )
+
+    def draw(self) -> Image.Image:
+        """
+        Draw the table image using Pillow.
+        """
+
+        # create image
+        image = Image.new(
+            "RGBA",
+            self.image_dimensions(),
+            self.colors.bg,
+        )
+        draw = ImageDraw.Draw(image)
+
+        ((start_x, start_y), (end_x, end_y)) = self.table_position()
+
+        # add backgrounds (cells and header)
         draw.rectangle(
-            [
-                (_margin.left, _margin.top),
-                (
-                    _margin.left + tab_width,
-                    _margin.top + row_max_hei[0] + cell_pad[1] * 2,
-                ),
-            ],
-            fill=colors["header_bg"],
+            [(start_x, start_y), (end_x, end_y)],
+            fill=self.colors.cell_bg,
             width=0,
         )
 
-    top = _margin.top
-    for row_h in row_max_hei:
+        # add row lines
+        y = self.margin.top
+        for row_h in self.row_height:
+            draw.line(
+                [(start_x, y), (end_x, y)],
+                fill=self.colors.row_line,
+            )
+            y += row_h + self.cell_pad.height * 2
         draw.line(
-            [(_margin.left, top), (tab_width + _margin.left, top)],
-            fill=colors["rowline"],
+            [(start_x, y), (end_x, y)],
+            fill=self.colors.row_line,
         )
-        top += row_h + cell_pad[1] * 2
-    draw.line(
-        [(_margin.left, top), (tab_width + _margin.left, top)], fill=colors["rowline"]
-    )
 
-    left = _margin.left
-    for col_w in col_max_wid:
+        # add column lines
+        x = self.margin.left
+        for col_w in self.col_width:
+            draw.line(
+                [(x, start_y), (x, end_y)],
+                fill=self.colors.col_line,
+            )
+            x += col_w + self.cell_pad.width * 2
         draw.line(
-            [(left, _margin.top), (left, tab_heigh + _margin.top)],
-            fill=colors["colline"],
+            [(x, start_y), (x, end_y)],
+            fill=self.colors.col_line,
         )
-        left += col_w + cell_pad[0] * 2
-    draw.line(
-        [(left, _margin.top), (left, tab_heigh + _margin.top)], fill=colors["colline"]
-    )
 
-    top, left = _margin.top + cell_pad[1], 0
-    for i in range(len(table)):
-        left = _margin.left + cell_pad[0]
-        for j in range(len(table[i])):
-            color = colors["font"]
-            if stock:
-                if table[i][j].startswith("+"):
-                    color = colors["red"]
-                elif table[i][j].startswith("-"):
-                    color = colors["green"]
-            _left = left
-            if (align and align[j] == "c") or (header and i == 0):
-                _left += (col_max_wid[j] - get_text_size(table[i][j], font)[0]) // 2
-            elif align and align[j] == "r":
-                _left += col_max_wid[j] - get_text_size(table[i][j], font)[0]
-            draw.text((_left, top), table[i][j], font=font, fill=color)
-            left += col_max_wid[j] + cell_pad[0] * 2
-        top += row_max_hei[i] + cell_pad[1] * 2
+        (x, y) = (0, self.margin.top + self.cell_pad.height)
+        for i, row in enumerate(self.table):
+            x = self.margin.left + self.cell_pad.width
+            for j, cell in enumerate(row):
+                # determine color
+                color = self.colors.font
+                if self.stock:
+                    if cell.startswith("+"):
+                        color = self.colors.red
+                    elif cell.startswith("-"):
+                        color = self.colors.green
+                # add text from cell
+                draw.text((x, y), cell, font=self.font, fill=color)
 
-    return tab
+                # update position for next cell
+                x += self.col_width[j] + self.cell_pad.width * 2
+            y += self.row_height[i] + self.cell_pad.height * 2
+
+        return image
